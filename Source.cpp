@@ -54,4 +54,7 @@ void main() {
 	afficher(G1->getDISTANCE());
 	cout << "====================================" << endl;
 	afficher(G2->getDISTANCE());
+	cout << "====================================" << endl;
+	afficher(G1->getFP());
+	afficher(G1->getAPP());
 }
