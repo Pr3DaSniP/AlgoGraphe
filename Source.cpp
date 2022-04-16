@@ -1,10 +1,11 @@
 #include <iostream>
 #include <vector>
+#include <stack>
 
 using namespace std;
 
 class Graphe {
-private:
+protected:
 	// FS & APS
 	vector<int> d_fs;
 	vector<int> d_aps;
@@ -26,12 +27,25 @@ private:
 	// RANG
 	vector<int> d_rang;
 
+	// TARJAN
+	vector<int> d_tarjan_num;
+	vector<int> d_tarjan_prem;
+	vector<int> d_tarjan_pilch;
+	vector<int> d_tarjan_cfc;
+
+	// FSR & APSR
+	vector<int> d_fsr;
+	vector<int> d_apsr;
+
+	// BR
+	vector<int> d_br;
+
 public:
 	// CONSTRUCTEUR
 	Graphe(vector<int> fs, vector<int> aps) : d_fs{ fs }, d_aps{ aps } { FS_APS_to_MATRICE(); initialisation(); }
 	Graphe(vector<vector<int>> matrice) : d_matriceAdjacence{ matrice } { MATRICE_to_FS_APS(); initialisation(); }
 
-	// GETTER
+	// GETTERS
 	int getNBSOMMETS() {
 		return d_aps[0];
 	}
@@ -62,6 +76,24 @@ public:
 	vector<int> getRANG() {
 		return d_rang;
 	}
+	vector<int> getTARJCFC() {
+		return d_tarjan_cfc;
+	}
+	vector<int> getTARJNUM() {
+		return d_tarjan_num;
+	}
+	vector<int> getTARJPREM() {
+		return d_tarjan_prem;
+	}
+	vector<int> getTARJPILCH() {
+		return d_tarjan_pilch;
+	}
+	vector<int> getFSR() {
+		return d_fsr;
+	}
+	vector<int> getAPSR() {
+		return d_apsr;
+	}
 
 	void initialisation() {
 		calculDDI();
@@ -69,6 +101,20 @@ public:
 		FS_APS_to_FP_APP();
 		calculMatDistance();
 		calculRang();
+		calculTarjan();
+		calculGrapheReduit();
+	}
+
+	// UTILS
+	int depiler(vector<int>& v)
+	{
+		int tmp = v.back();
+		v.pop_back();
+		return tmp;
+	}
+	void empiler(int x, vector<int>& pilch) {
+		pilch[x] = pilch[0];
+		pilch[0] = x;
 	}
 
 	// DONE
@@ -260,21 +306,224 @@ public:
 		}
 		d_rang[0] = n;
 	}
-	void empiler(int x, vector<int>& pilch)	{
-		pilch[x] = pilch[0];
-		pilch[0] = x;
+
+	// A VERIFIER
+	void calculTarjan() {
+		int n = d_aps[0];
+		vector<int> num(n + 1, -1), cfc(n + 1, -1);
+		vector<bool> entarj(n + 1, false);
+		vector<int> tarj;
+		d_tarjan_prem.push_back(0);
+		d_tarjan_pilch.resize(n + 1);
+		for (int i = 1; i <= n; ++i) {
+			if (num[i] == -1) {
+				dfs(i, num, cfc, tarj, entarj);
+			}
+		}
+		d_tarjan_num = num;
+		d_tarjan_num[0] = d_tarjan_num.size() - 1;
+		d_tarjan_cfc = cfc;
+		d_tarjan_cfc[0] = d_tarjan_cfc.size() - 1;
+		d_tarjan_prem[0] = d_tarjan_prem.size() - 1;
+	}
+	void dfs(int u, vector<int>& num, vector<int>& cfc, vector<int>& tarj, vector<bool>& entarj) {
+		static int time = 1;
+		num[u] = cfc[u] = time;
+		time += 1;
+		tarj.push_back(u);
+		entarj[u] = true;
+
+		int t;
+		for (int k = d_aps[u]; (t = d_fs[k]) != 0; ++k) {
+			if (num[t] == -1) {
+				dfs(t, num, cfc, tarj, entarj);
+				cfc[u] = min(cfc[u], cfc[t]);
+			}
+			else if(entarj[t]) {
+				cfc[u] = min(cfc[u], num[t]);
+			}
+		}
+
+		if (cfc[u] == num[u]) {
+			int tmp = tarj.back();
+			tarj.pop_back();
+			while (tmp != u) {
+				entarj[tmp] = false;
+				empiler(tmp, d_tarjan_pilch);
+				tmp = tarj.back();
+				tarj.pop_back();
+			}
+			entarj[u] = false;
+			empiler(u, d_tarjan_pilch);
+			d_tarjan_prem.push_back(u);
+			d_tarjan_pilch[0] = 0;
+		}
+	}
+
+	// A FIX
+	void calculGrapheReduit() {
+		/*int s, kr = 1, nbc = d_tarjan_prem[0];
+		vector<bool> deja_mis(nbc + 1, false);
+		d_fsr.resize(d_fs[0] + 1);
+		d_apsr.resize(nbc + 1);
+		d_apsr[0] = kr;
+		for (int i = 1; i < nbc; ++i) {
+			d_apsr[i] = kr;
+			deja_mis[i] = true;
+			s = d_tarjan_prem[0];
+			while (s != 0) {
+				for (int t = d_aps[s]; d_fs[t] != 0; ++t) {
+					if (deja_mis[d_tarjan_cfc[d_fs[t]]] == false) {
+						d_fsr[kr] = d_tarjan_cfc[d_fs[t]];
+						kr++;
+						deja_mis[d_tarjan_cfc[d_fs[t]]] = true;
+					}
+				}
+				s = d_tarjan_pilch[s];
+			}
+			d_fsr[kr] = 0;
+			kr++;
+		}
+		d_fsr[0] = kr - 1;*/
+
+		vector<bool> marque(d_aps[0], false);
+		int kr = 1;
+		int s;
+		int t;
+		d_apsr.push_back(0);
+		for (int c = 1; c <= d_tarjan_prem[0]; ++c) {
+			marque[c] = true;
+			s = d_tarjan_prem[c];
+			d_apsr.push_back(kr);
+			while (s != 0) {
+				for (int k = d_aps[s]; (t = d_fs[k]) != 0; ++k) {
+					if (marque[d_tarjan_cfc[t]] == false) {
+						++kr;
+						d_fsr.push_back(d_tarjan_cfc[t]);
+						marque[d_tarjan_cfc[t]] = true;
+					}
+				}
+				s = d_tarjan_pilch[s];
+			}
+			++kr;
+			d_fsr.push_back(0);
+		}
+		d_apsr[0] = d_tarjan_prem.size();
+		d_fsr[0] = kr;
+	}
+	void calculBaseReduit() {
+		int n = d_apsr[0];
+		d_br.resize(n + 1);
+		vector<int> ddir(n + 1, 0);
+		for (int kr = 1; kr <= d_fsr[0]; ++kr) {
+			ddir[d_fsr[kr]]++;
+		}
+		int nb = 0;
+		for (int c = 1; c <= n; ++c) {
+			if (ddir[c] == 0) {
+				d_br[++nb] = c;
+			}
+		}
+		d_br[0] = nb;
 	}
 };
 
+
+class GrapheOrienteValue : public Graphe {
+private:
+	// ORDONNANCEMENT
+	// FPC & APPC & LC
+	vector<int> d_fpc;
+	vector<int> d_appc;
+	vector<int> d_lc;
+
+	// DISKSTRA
+	// D(istance) & PRED
+	vector<int> d_d;
+	vector<int> d_pred;
+
+	// DANTZIG
+	// C(out)
+	vector<vector<int>> d_c;
+
+public:
+	// CONSTRUCTEUR
+	GrapheOrienteValue(vector<int> fs, vector<int> aps) : Graphe(fs,aps) {}
+	GrapheOrienteValue(vector<vector<int>> matrice) : Graphe(matrice) {}
+
+	// GETTERS
+	vector<int> getFPC() {
+		return d_fpc;
+	}
+	vector<int> getAPPC() {
+		return d_appc;
+	}
+	vector<int> getLC() {
+		return d_lc;
+	}
+	vector<int> getD() {
+		return d_d;
+	}
+	vector<int> getPRED() {
+		return d_pred;
+	}
+	vector<vector<int>> getC() {
+		return d_c;
+	}
+
+	void ordonnancement() {}
+
+	void dijkstra() {}
+
+	void dantzig() {}
+};
+
+class GrapheNonOrienteValue : public Graphe {
+private:
+	// KRUSKAL
+	// PREM & PILCH & CFC
+	vector<int> d_kruskal_prem;
+	vector<int> d_kruskal_pilch;
+	vector<int> d_kruskal_cfc;
+
+	// PRUFER
+	// PRF
+	vector<int> d_prf;
+
+public:
+	// CONSTRUCTEUR
+	GrapheNonOrienteValue(vector<int> fs, vector<int> aps) : Graphe(fs, aps) {}
+	GrapheNonOrienteValue(vector<vector<int>> matrice) : Graphe(matrice) {}
+
+	// GETTERS
+	vector<int> getKRUSKALPREM() {
+		return d_kruskal_prem;
+	}
+	vector<int> getKRUSKALPILCH() {
+		return d_kruskal_pilch;
+	}
+	vector<int> getKRUSKALCFC() {
+		return d_kruskal_cfc;
+	}
+	vector<int> getPRF() {
+		return d_prf;
+	}
+
+	void kruskal() {}
+
+	void prufer() {}
+};
+
+
 void afficher(string s, vector<int> tab) {
-	cout << s;
+	cout << s << endl;
 	for (int i = 0; i < tab.size(); ++i) {
 		cout << tab[i] << "\t";
 	}
 	cout << endl;
 }
 void afficher(string s, vector<vector<int>> tab) {
-	cout << s;
+	cout << s << endl;
 	for (int i = 0; i < tab.size(); ++i) {
 		for (int j = 0; j < tab[i].size(); ++j) {
 			cout << tab[i][j] << "\t";
@@ -282,11 +531,54 @@ void afficher(string s, vector<vector<int>> tab) {
 		cout << endl;
 	}
 }
+void seperator() {
+	cout << "\n===========================================================================\n";
+}
+void afficherSommet(Graphe& G) {
+	seperator();
+	for (int i = 0; i <= G.getNBSOMMETS(); ++i) {
+		cout << i << "\t";
+	}
+	seperator();
+}
 
 void main() {
-	
-	vector<int> fs = { 12,2,3,0,4,5,0,2,4,0,5,0,0 };
-	vector<int> aps = { 5,1,4,7,10,11 };
+
+	//vector<int> fs = { 12,2,3,0,4,5,0,2,4,0,5,0,0 };
+	//vector<int> aps = { 5,1,4,7,10,11 };
+
+	//vector<int> fs = { 22,2,3,4,0,0,6,0,7,0,1,2,6,0,3,4,7,8,0,4,0,7,0 };
+	//vector<int> aps = { 8,1,5,6,8,10,14,19,21 };
+
+	/*vector<vector<int>> matrice =
+	{
+		{8,13,0,0,0,0,0,0,0},
+		{0,0,1,0,0,0,0,0,0},
+		{0,0,0,1,0,0,0,0,0},
+		{0,1,0,0,0,0,0,0,0},
+		{0,0,0,0,0,1,0,0,1},
+		{0,0,0,0,0,0,1,0,0},
+		{0,1,0,0,0,0,0,1,0},
+		{0,1,0,1,0,1,0,0,0},
+		{0,0,0,0,1,0,1,0,0}
+	};*/
+
+	//vector<int> fs = { 13,2,0,3,0,1,4,0,5,0,6,0,4,0 };
+	//vector<int> aps = { 6,1,3,5,8,10,12 };
+	vector<int> fs = {
+		24,
+		2,3,0,
+		4,5,0,
+		0,
+		6,0,
+		6,0,
+		7,0,
+		3,5,0,
+		1,0,
+		10,0,
+		4,8,9,0
+	};
+	vector<int> aps = {10,1,4,7,8,10,12,14,17,19,21};
 
 	vector<vector<int>> matrice =
 	{
@@ -299,16 +591,23 @@ void main() {
 	};
 
 	Graphe G{ fs,aps };
-	//Graphe G{ matrice };
-	cout << "\n=============================\n";
-	for (int i = 0; i <= G.getNBSOMMETS(); ++i) {
-		cout << i << "\t";
-	}
-	cout << "\n=============================\n";
 
-	afficher("Mat : \n", G.getMATRICEADJACENCE());
-	cout << "\n=============================\n";
+	afficherSommet(G);
 
-	afficher("Rang : \n", G.getRANG());
+	afficher("FS : ", G.getFS());
+	afficher("APS : ", G.getAPS());
+
+	seperator();
+
+	afficher("FSR : ", G.getFSR());
+	afficher("APSR : ", G.getAPSR());
+
+	
+	/*seperator();
+
+	afficher("CFC : ", G.getTARJCFC());
+	afficher("NUM : ", G.getTARJNUM());
+	afficher("PREM : ", G.getTARJPREM());
+	afficher("PILCH : ", G.getTARJPILCH());*/
 
 }
