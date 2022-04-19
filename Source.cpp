@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <stack>
+#include <algorithm>
 
 using namespace std;
 
@@ -102,7 +102,7 @@ public:
 		calculMatDistance();
 		calculRang();
 		calculTarjan();
-		calculGrapheReduit();
+		//calculGrapheReduit();
 	}
 
 	// UTILS
@@ -307,7 +307,7 @@ public:
 		d_rang[0] = n;
 	}
 
-	// A VERIFIER
+	// DONE
 	void calculTarjan() {
 		int n = d_aps[0];
 		vector<int> num(n + 1, -1), cfc(n + 1, -1);
@@ -317,6 +317,9 @@ public:
 		d_tarjan_pilch.resize(n + 1);
 		for (int i = 1; i <= n; ++i) {
 			if (num[i] == -1) {
+				//afficher("NUM : ", num);
+				//afficher("CFC : ", cfc);
+				//afficher("TARJ : ", tarj);
 				dfs(i, num, cfc, tarj, entarj);
 			}
 		}
@@ -428,7 +431,6 @@ public:
 	}
 };
 
-
 class GrapheOrienteValue : public Graphe {
 private:
 	// ORDONNANCEMENT
@@ -439,61 +441,255 @@ private:
 
 	// DISKSTRA
 	// D(istance) & PRED
-	vector<int> d_d;
-	vector<int> d_pred;
+	vector<int> d_dijkstra_d;
+	vector<int> d_dijkstra_pred;
 
 	// DANTZIG
-	// C(out)
+	// C(out) & Dantzig_c
 	vector<vector<int>> d_c;
+	vector<vector<int>> d_dantzig_c;
+	bool d_presence_circuit_absorbant = false;
 
 public:
 	// CONSTRUCTEUR
-	GrapheOrienteValue(vector<int> fs, vector<int> aps) : Graphe(fs,aps) {}
-	GrapheOrienteValue(vector<vector<int>> matrice) : Graphe(matrice) {}
+	GrapheOrienteValue(vector<int> fs, vector<int> aps, vector<vector<int>> cout) : Graphe(fs, aps), d_c{ cout } {}
+	GrapheOrienteValue(vector<vector<int>> matrice, vector<vector<int>> cout) : Graphe(matrice), d_c{ cout } {}
 
 	// GETTERS
-	vector<int> getFPC() {
+	vector<int> getORDONNANCEMENTFPC() {
 		return d_fpc;
 	}
-	vector<int> getAPPC() {
+	vector<int> getORDONNANCEMENTAPPC() {
 		return d_appc;
 	}
-	vector<int> getLC() {
+	vector<int> getORDONNANCEMENTLC() {
 		return d_lc;
 	}
-	vector<int> getD() {
-		return d_d;
+	vector<int> getDIJKSTRAD() {
+		return d_dijkstra_d;
 	}
-	vector<int> getPRED() {
-		return d_pred;
+	vector<int> getDIJKSTRAPRED() {
+		return d_dijkstra_pred;
 	}
 	vector<vector<int>> getC() {
 		return d_c;
 	}
+	vector<vector<int>> getDANTZIGC() {
+		return d_dantzig_c;
+	}
+	bool isPresenceCircuitAbsorbant() {
+		return d_presence_circuit_absorbant;
+	}
 
 	void ordonnancement() {}
 
-	void dijkstra() {}
+	// DONE
+	void dijkstra(int s) {
+		if (verifDijkstra()) {
+			int n = d_aps[0];
+			vector<int> visited;
+			vector<int> notvisited;
+			visited.push_back(s);
+			for (int i = 1; i <= n; ++i) {
+				if (i != s) {
+					notvisited.push_back(i);
+				}
+			}
+			d_dijkstra_d = d_c[s];
+			d_dijkstra_pred.resize(n + 1, s);
 
-	void dantzig() {}
+			int j = dijkstra_dmin(notvisited, d_dijkstra_d);
+			while (!notvisited.empty()) {
+				for (int i = 0; i < notvisited.size(); ++i) {
+					if (notvisited[i] == j) {
+						notvisited.erase(notvisited.begin() + i);
+					}
+				}
+				visited.push_back(j);
+				int k = d_fs[d_aps[j]];
+				while (k != 0) {
+					if (dijkstra_appartient(k, notvisited)) {
+						int v = d_dijkstra_d[j] + d_c[j][k];
+						if (v < d_dijkstra_d[k]) {
+							d_dijkstra_d[k] = v;
+							d_dijkstra_pred[k] = j;
+						}
+					}
+					k = d_fs[d_aps[j]++];
+				}
+				j = dijkstra_dmin(notvisited, d_dijkstra_d);
+			}
+			d_dijkstra_d[0] = n;
+			d_dijkstra_pred[0] = n;
+		}
+	}
+	bool dijkstra_appartient(int k, vector<int> S) {
+		for (int i = 0; i < S.size(); ++i)
+		{
+			if (S[i] == k)
+				return true;
+		}
+		return false;
+	}
+	int dijkstra_dmin(vector<int>& S, vector<int>& d)
+	{
+		if (!S.empty()) {
+			int mini = INT_MAX;
+			int indice = 0;
+			for (unsigned int i = 0; i < S.size(); ++i) {
+				if (mini > d[S[i]]) {
+					mini = d[S[i]];
+					indice = i;
+				}
+			}
+			return S[indice];
+		}
+		else return INT_MAX;
+	}
+	bool verifDijkstra() {
+		for (int i = 1; i < d_c.size(); ++i) {
+			for (int j = 1; j < d_c[i].size(); ++j) {
+				if (d_c[i][j] < 0) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	// A FIX
+	void dantzig() {
+		
+		vector<vector<int>> dantzig_c;
+		/*dantzig_c.resize(2);
+		for (int i = 0; i < 2; ++i) {
+			dantzig_c[i].resize(2);
+		}
+		for (int i = 1; i <= 2; ++i) {
+			for (int j = 1; j <= 2; ++j) {
+				dantzig_c[i-1][j-1] = d_c[i][j];
+			}
+		}*/
+		
+		dantzig_c = d_c;
+		
+		//while (dantzig_c.size() < d_c.size() - 1) {
+			int n = d_c[0][0];
+			int i, j, k;
+			double x;
+			for (k = 1; k < n; ++k) {
+				//augmenteMatrice(dantzig_c);
+				for (i = 1; i <= k; ++i) {
+					for (j = 1; j <= k; ++j) {
+						/*dantzig_c[i - 1][k] = min(d_c[i][j], d_c[j][k + 1]);
+						dantzig_c[k][i - 1] = min(d_c[k + 1][i], d_c[j][i]);*/
+						if ((x = d_c[i][j] + d_c[j][k + 1]) < (d_c[i][k + 1])) {
+							dantzig_c[i - 1][k] = x;
+						}
+						if ((x = d_c[k + 1][j] + d_c[j][i]) < (d_c[k + 1][i])) {
+							dantzig_c[k][i - 1] = x;
+						}
+					}
+					if ((d_c[i][k + 1] + d_c[k + 1][i]) < 0) {
+						d_presence_circuit_absorbant = true;
+						return;
+					}
+				}
+				for (i = 1; i < k; ++i) {
+					/*int t = d_c[k + 1][j] + d_c[j][k + 1];
+					if (t < 0) {
+						d_presence_circuit_absorbant = true;
+						return;
+					}*/
+					for (j = 1; j < k; ++j) {
+						//dantzig_c[i - 1][j - 1] = min(d_c[i][j], d_c[i][k + 1] + d_c[k + 1][j]);
+						if ((x = d_c[i][k + 1] + d_c[k + 1][j]) < d_c[i][j]) {
+							dantzig_c[i - 1][j - 1] = x;
+						}
+					}
+				}
+			}
+		//}
+
+		d_dantzig_c.resize(d_c.size());
+		for(int i = 0; i < d_c.size(); ++i) {
+			d_dantzig_c[i].resize(d_c[i].size());
+		}
+
+		for(int i = 1; i < d_dantzig_c.size(); ++i) {
+			for(int j = 1; j < d_dantzig_c[0].size(); ++j) {
+				d_dantzig_c[i][j] = dantzig_c[i - 1][j - 1];
+			}
+		}
+
+		d_dantzig_c[0][0] = d_c[0][0];
+		d_dantzig_c[0][1] = d_c[0][1];
+
+		//d_dantzig_c = d_c;
+		//int n = d_c[0][0];
+		//int i, j, k;
+		//double x;
+		//for (k = 1; k < n; k++) {
+		//	for (i = 1; i <= k; i++) {
+		//		for (j = 1; j <= k; j++) {
+		//			
+		//			d_dantzig_c[i][k + 1] = min(d_c[i][j], d_c[j][k + 1]);
+		//			d_dantzig_c[k + 1][i] = min(d_c[k + 1][i], d_c[j][i]);
+		//			
+		//
+		//			/*if ((x = d_c[i][j] + d_c[j][k + 1]) < (d_c[i][k + 1])) {
+		//				d_dantzig_c[i][k + 1] = x;
+		//			}
+		//			if ((x = d_c[k + 1][j] + d_c[j][i]) < (d_c[k + 1][i])) {
+		//				d_dantzig_c[k + 1][i] = x;
+		//			}*/
+		//		}
+		//		/*if ((d_c[i][k + 1] + d_c[k + 1][i]) < 0) {
+		//			d_presence_circuit_absorbant = true;
+		//			return;
+		//		}*/
+		//	}
+		//	for (i = 1; i <= k; i++) {
+		//		int t = d_c[k + 1][j] + d_c[j][k + 1];
+		//		if (t < 0) {
+		//			d_presence_circuit_absorbant = true;
+		//			return;
+		//		}
+		//		for (j = 1; j <= k; j++) {
+		//			d_dantzig_c[i][j] = min(d_c[i][j], d_c[i][k + 1] + d_c[k + 1][j]);
+		//			/*if ((x = d_c[i][k + 1] + d_c[k + 1][j]) < d_c[i][j]) {
+		//				d_dantzig_c[i][j] = x;
+		//			}*/
+		//		}
+		//	}
+		//}
+	}
+	void augmenteMatrice(vector<vector<int>>& matrice) {
+		matrice.resize(matrice.size() + 1);
+		int n = matrice.size();
+		for (int i = 0; i < n; ++i) {
+			matrice[i].resize(n, -99);
+		}
+		matrice[n - 1][n - 1] = 0;
+	}
+	
 };
 
 class GrapheNonOrienteValue : public Graphe {
 private:
+	// C(out)
+	vector<vector<int>> d_c;
+
 	// KRUSKAL
 	// PREM & PILCH & CFC
 	vector<int> d_kruskal_prem;
 	vector<int> d_kruskal_pilch;
 	vector<int> d_kruskal_cfc;
 
-	// PRUFER
-	// PRF
-	vector<int> d_prf;
-
 public:
 	// CONSTRUCTEUR
-	GrapheNonOrienteValue(vector<int> fs, vector<int> aps) : Graphe(fs, aps) {}
-	GrapheNonOrienteValue(vector<vector<int>> matrice) : Graphe(matrice) {}
+	GrapheNonOrienteValue(vector<int> fs, vector<int> aps, vector<vector<int>> cout) : Graphe(fs, aps), d_c{ cout } {}
+	GrapheNonOrienteValue(vector<vector<int>> matrice, vector<vector<int>> cout) : Graphe(matrice), d_c{ cout } {}
 
 	// GETTERS
 	vector<int> getKRUSKALPREM() {
@@ -505,13 +701,170 @@ public:
 	vector<int> getKRUSKALCFC() {
 		return d_kruskal_cfc;
 	}
+
+	// STRUCTURE POUR KRUSKAL
+	struct arete {
+		int s, t;
+		int cout;
+	};
+	
+	// A VERIFIER
+	void kruskal() {
+		vector<arete> a;
+		int n = d_aps[0];
+		int m = d_fs[0] - n;
+		int t;
+		for (int u = 1; u < n; ++u) {
+			for (int k = d_aps[u]; (t = d_fs[k]) != 0; ++k) {
+				a.push_back({ u, t, d_c[u][t] });
+			}
+		}
+		sort(a.begin(), a.end(), [](arete a, arete b) {
+			return a.cout < b.cout;
+		});
+
+		d_kruskal_cfc.resize(n + 1);
+		d_kruskal_prem.resize(n + 1);
+		d_kruskal_pilch.resize(n + 1, 0);
+		for (int i = 1; i <= n; ++i) {
+			d_kruskal_cfc[i] = i;
+			d_kruskal_prem[i] = i;
+		}
+		d_kruskal_cfc[0] = n;
+		d_kruskal_prem[0] = n;
+		d_kruskal_pilch[0] = n;
+		
+		vector<int> parent(n + 1);
+		for (int i = 0; i <= n; ++i) {
+			parent[i] = i;
+		}
+		
+		vector<arete> Arbre(n - 1);
+		int count = 0;
+		int i = 0;
+		while (count < n - 1) {
+			arete currentArete = a[i];
+			
+			int src = findParent(currentArete.s, parent);
+			int dest = findParent(currentArete.t, parent);
+			
+			if (src != dest) {
+				
+				d_kruskal_cfc[dest] = currentArete.s;
+				d_kruskal_pilch[src] = currentArete.t;
+				
+				Arbre[count] = currentArete;
+				count++;
+				parent[src] = dest;
+			}
+			++i;
+		}
+	}
+	int findParent(int v, vector<int> parent) {
+		if (parent[v] == v) {
+			return v;
+		}
+		else {
+			return findParent(parent[v], parent);
+		}
+	}
+};
+
+class Arbre {
+private:
+	// FS & APS
+	vector<int> d_fs;
+	vector<int> d_aps;
+
+	// MATRICE ADJACENCE
+	vector<vector<int>> d_matriceAdjacence;
+
+	// PRUFER
+	// PRF
+	vector<int> d_codage_prf;
+	bool is_prf_encoded = false;
+public :
+	// CONSTRUCTEUR
+	Arbre(vector<int> fs, vector<int> aps) : d_fs{ fs }, d_aps{ aps } {}
+	Arbre(vector<vector<int>> matrice) : d_matriceAdjacence{ matrice } {}
+
+	// GETTERS
+	vector<int> getFS() {
+		return d_fs;
+	}
+	vector<int> getAPS() {
+		return d_aps;
+	}
+	vector<vector<int>> getMATRICE() {
+		return d_matriceAdjacence;
+	}
 	vector<int> getPRF() {
-		return d_prf;
+		return d_codage_prf;
+	}
+	
+	// DONE mais AFFICHAGE
+	void decode_prufer() {
+		if (is_prf_encoded) {
+			int m = d_codage_prf[0];
+			int n = m + 2;
+
+			vector<int> arbre(n + 1, 0);
+
+			for (int i = 1; i <= m; ++i) {
+				arbre[d_codage_prf[i]]++;
+			}
+
+			for (int i = 1; i <= m; ++i) {
+				cout << "[" << d_codage_prf[i];
+				int k = 1;
+				while (arbre[k] != 0) {
+					k++;
+				}
+				cout << ", " << k << "]" << endl;
+				arbre[k] = -1;
+				arbre[d_codage_prf[i]]--;
+			}
+
+			cout << "[";
+			for (int i = 1; i <= n; i++) {
+				if (arbre[i] == 0) {
+					cout << i << " ";
+				}
+			}
+			cout << "]" << endl;
+		}
 	}
 
-	void kruskal() {}
+	// DONE
+	void encode_prufer() {
+		int n = d_matriceAdjacence[0][0];
+		d_codage_prf.resize(n - 1);
+		d_codage_prf[0] = n - 2;
 
-	void prufer() {}
+		vector<vector<int>> matrice = d_matriceAdjacence;
+
+		for (int i = 1; i <= n; ++i) {
+			matrice[i][0] = 0;
+			for(int j = 1; j <= n; ++j) {
+				matrice[i][0] += matrice[i][j];
+			}
+		}
+
+		for (int k = 1; k <= (n - 2); k++) {
+			int i = 1;
+			for (; matrice[i][0] != 1; i++);
+			
+			int j = 1;
+			for (; matrice[i][j] != 1; j++);
+			
+			d_codage_prf[k] = j;
+			matrice[i][j] = 0;
+			matrice[j][i] = 0;
+			matrice[i][0] = 0;
+			matrice[j][0]--;
+		}
+		is_prf_encoded = true;
+	}
 };
 
 
@@ -536,78 +889,250 @@ void seperator() {
 }
 void afficherSommet(Graphe& G) {
 	seperator();
-	for (int i = 0; i <= G.getNBSOMMETS(); ++i) {
+	cout << "\t";
+	for (int i = 1; i <= G.getNBSOMMETS(); ++i) {
 		cout << i << "\t";
 	}
 	seperator();
 }
 
+void augmenteMatrice(vector<vector<int>>& matrice) {
+	matrice.resize(matrice.size() + 1);
+	int n = matrice.size();
+	for (int i = 0; i < n; ++i) {
+		matrice[i].resize(n, -1);
+	}
+	matrice[n - 1][n - 1] = 0;
+}
+
+bool Dantzig(vector<vector<int>>& c) {
+	int n = c[0][0];
+	int i, j, k;
+	double x;
+	for (k = 1; k < n; k++) {
+		for (i = 1; i <= k; i++) {
+			for (j = 1; j <= k; j++) {
+				if ((x = c[i][j] + c[j][k + 1]) < (c[i][k + 1])) {
+					c[i][k + 1] = x;
+				}
+				if ((x = c[k + 1][j] + c[j][i]) < (c[k + 1][i])) {
+					c[k + 1][i] = x;
+				}
+			}
+			if ((c[i][k + 1] + c[k + 1][i]) < 0) {
+				printf("Présence d'un circuit absorbant passant par %d et %d \n", i, k + 1);
+				return false;
+			}
+		}
+		for (i = 1; i <= k; i++) {
+			for (j = 1; j <= k; j++) {
+				if ((x = c[i][k + 1] + c[k + 1][j]) < c[i][j]) {
+					c[i][j] = x;
+				}
+			}
+		}
+	}
+}
+
+
 void main() {
-
-	//vector<int> fs = { 12,2,3,0,4,5,0,2,4,0,5,0,0 };
-	//vector<int> aps = { 5,1,4,7,10,11 };
-
-	//vector<int> fs = { 22,2,3,4,0,0,6,0,7,0,1,2,6,0,3,4,7,8,0,4,0,7,0 };
-	//vector<int> aps = { 8,1,5,6,8,10,14,19,21 };
-
-	/*vector<vector<int>> matrice =
+	// RANG //
+	
+	/*
+	vector<vector<int>> matrice =
 	{
-		{8,13,0,0,0,0,0,0,0},
-		{0,0,1,0,0,0,0,0,0},
-		{0,0,0,1,0,0,0,0,0},
-		{0,1,0,0,0,0,0,0,0},
-		{0,0,0,0,0,1,0,0,1},
-		{0,0,0,0,0,0,1,0,0},
-		{0,1,0,0,0,0,0,1,0},
-		{0,1,0,1,0,1,0,0,0},
-		{0,0,0,0,1,0,1,0,0}
-	};*/
-
-	//vector<int> fs = { 13,2,0,3,0,1,4,0,5,0,6,0,4,0 };
-	//vector<int> aps = { 6,1,3,5,8,10,12 };
-	vector<int> fs = {
-		24,
-		2,3,0,
-		4,5,0,
-		0,
-		6,0,
-		6,0,
-		7,0,
-		3,5,0,
-		1,0,
-		10,0,
-		4,8,9,0
+		{12,19,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,1,1,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,1,0,0,0,0,1,0,0,0},
+		{0,0,0,0,1,0,1,0,1,0,0,0,0},
+		{0,0,0,0,0,0,0,0,1,1,0,1,0},
+		{0,0,0,1,0,0,1,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,1,1,0,0,0,0},
+		{0,0,0,0,0,0,0,0,1,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,10,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,1,0},
+		{0,0,0,0,0,0,0,0,0,0,1,0,1},
+		{0,0,0,0,0,0,0,0,0,0,0,0,0}
 	};
-	vector<int> aps = {10,1,4,7,8,10,12,14,17,19,21};
+	Graphe G{ matrice };
+	
+	afficherSommet(G);
+	
+	afficher("RANG : ", G.getRANG());
+	*/
+
+	// FIN RANG //
+
+	// DANTZIG //
+	
+	/*
+	vector<int> fs = { 13,2,3,0,4,5,0,4,0,0,1,3,4,0 };
+	vector<int> aps = { 5,1,4,7,9,10 };
+	vector<vector<int>> c =
+	{
+		{5,8,0,0,0,0},
+		{0,0,-2,4,99,99},
+		{0,99,0,99,4,3},
+		{0,99,99,0,1,99},
+		{0,99,99,99,0,99},
+		{0,0,99,-1,99,0}
+	};
+	
+	GrapheOrienteValue G{fs, aps, c};
+
+	G.dantzig();
+
+	afficher("COUT : ", G.getC());
+	afficher("DANTZIG : ", G.getDANTZIGC());
+	*/
+	
+	// FIN DANTZIG //
+
+	// DISKSTRA //
+	
+	/*
+	vector<vector<int>> matrice =
+	{
+		{7,13,0,0,0,0,0,0},
+		{0,0,1,1,0,1,0,1},
+		{0,0,0,1,0,1,0,0},
+		{0,0,0,0,0,1,1,0},
+		{0,0,0,1,0,0,0,0},
+		{0,0,0,0,1,0,0,0},
+		{0,0,0,0,1,0,0,0},
+		{0,0,0,1,0,0,1,0}
+	};
+
+	vector<vector<int>> c =
+	{
+		{7,13,0,0,0,0,0,0},
+		{0,0,1,3,INT_MAX,2,INT_MAX,1},
+		{0,INT_MAX,0,4,INT_MAX,1,INT_MAX,INT_MAX},
+		{0,INT_MAX,INT_MAX,0,INT_MAX,3,1,INT_MAX},
+		{0,INT_MAX,INT_MAX,1,0,INT_MAX,INT_MAX,INT_MAX},
+		{0,INT_MAX,INT_MAX,INT_MAX,1,0,INT_MAX,INT_MAX},
+		{0,INT_MAX,INT_MAX,INT_MAX,1,INT_MAX,0,INT_MAX},
+		{0,INT_MAX,INT_MAX,1,INT_MAX,INT_MAX,3,0}
+	};
+	*/
+	
+	/*
+	* EXEMPLE : https://www.youtube.com/watch?v=JPeCmKFrKio
+	vector<vector<int>> matrice =
+	{
+		{5,7,0,0,0,0},
+		{0,0,0,1,0,1},
+		{0,1,0,1,0,0},
+		{0,0,0,0,0,0},
+		{0,0,1,0,0,0},
+		{0,0,1,0,1,0}
+	};
+
+	vector<vector<int>> c =
+	{
+		{5,7,0,0,0,0},
+		{0,0,INT_MAX,18,INT_MAX,3},
+		{0,8,0,4,INT_MAX,INT_MAX},
+		{0,INT_MAX,INT_MAX,0,INT_MAX,INT_MAX},
+		{0,INT_MAX,1,INT_MAX,0,INT_MAX},
+		{0,INT_MAX,10,INT_MAX,2,0}
+	};
+	
+	GrapheOrienteValue G{ matrice, c };
+
+	G.dijkstra(1);
+	afficherSommet(G);
+	afficher("D : ", G.getDIJKSTRAD());
+	afficher("PRED : ", G.getDIJKSTRAPRED());
+	*/
+		
+	// FIN DISKSTRA //
+
+	// KRUSKAL //
+
+	/*
+	vector<vector<int>> cost =
+	{
+		{8,26,0,0,0,0,0,0,0},
+		{0,0,1,INT_MAX,INT_MAX,2,INT_MAX,INT_MAX,INT_MAX},
+		{0,1,0,2,1,1,INT_MAX,INT_MAX,INT_MAX},
+		{0,0,2,0,1,INT_MAX,INT_MAX,INT_MAX,1},
+		{0,INT_MAX,1,1,0,0,0,2,INT_MAX},
+		{0,2,1,INT_MAX,0,0,0,INT_MAX,INT_MAX},
+		{0,INT_MAX,INT_MAX,INT_MAX,0,0,0,1,INT_MAX},
+		{0,INT_MAX,INT_MAX,INT_MAX,2,INT_MAX,1,0,1},
+		{0,INT_MAX,INT_MAX,1,INT_MAX,INT_MAX,INT_MAX,1,0}
+	};
 
 	vector<vector<int>> matrice =
 	{
-		{5, 7, 0, 0, 0, 0},
-		{0, 0, 1, 1, 0, 0},
-		{0, 0, 0, 0, 1, 0},
-		{0, 0, 1, 0, 0, 1},
-		{0, 0, 0, 0, 0, 1},
-		{0, 0, 1, 0, 0, 0}
+		{8,26,0,0,0,0,0,0,0},
+		{0,0,1,0,0,1,0,0,0},
+		{0,1,0,1,1,1,0,0,0},
+		{0,0,1,0,1,0,0,0,1},
+		{0,0,1,1,0,1,1,1,0},
+		{0,1,1,0,1,0,1,0,0},
+		{0,0,0,0,1,1,0,1,0},
+		{0,0,0,0,1,0,1,0,1},
+		{0,0,0,1,0,0,0,1,0}
+	};
+	*/
+
+	/*
+	vector<vector<int>> matrice =
+	{
+		{4,12,0,0,0},
+		{0,0,1,1,1},
+		{0,1,0,1,1},
+		{0,1,1,0,1},
+		{0,1,1,1,0}
 	};
 
-	Graphe G{ fs,aps };
+	vector<vector<int>> cost =
+	{
+		{4,12,0,0,0},
+		{0,0,1,1,2},
+		{0,1,0,1,2},
+		{0,1,1,0,2},
+		{0,2,2,2,0}
+	};
+	
+	GrapheNonOrienteValue G{ matrice, cost };
+
+	G.kruskal();
 
 	afficherSommet(G);
 
-	afficher("FS : ", G.getFS());
-	afficher("APS : ", G.getAPS());
+	afficher("PREM : ", G.getKRUSKALPREM());
+	afficher("PILCH : ", G.getKRUSKALPILCH());
+	afficher("CFC : ", G.getKRUSKALCFC());
+	*/
+	
+	// FIN KRUSKAL //
 
-	seperator();
-
-	afficher("FSR : ", G.getFSR());
-	afficher("APSR : ", G.getAPSR());
+	// PRUFER //
 
 	
-	/*seperator();
+	vector<vector<int>> matrice =
+	{
+		{8,15,0,0,0,0,0,0,0},
+		{0,0,0,1,0,0,0,0,0},
+		{0,0,0,1,0,0,0,0,0},
+		{0,1,1,0,1,1,1,0,0},
+		{0,0,0,1,0,0,0,1,1},
+		{0,0,0,1,0,0,0,0,0},
+		{0,0,0,1,0,0,0,0,0},
+		{0,0,0,0,1,0,0,0,0},
+		{0,0,0,0,1,0,0,0,0}
+	};
 
-	afficher("CFC : ", G.getTARJCFC());
-	afficher("NUM : ", G.getTARJNUM());
-	afficher("PREM : ", G.getTARJPREM());
-	afficher("PILCH : ", G.getTARJPILCH());*/
+	Arbre A{ matrice };
 
+	A.encode_prufer();
+	A.decode_prufer();
+
+	//afficher("PRF : ", A.getPRF());
+
+	// FIN PRUFER //
 }
