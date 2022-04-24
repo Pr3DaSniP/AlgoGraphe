@@ -1,0 +1,5 @@
+﻿  GestionnaireGraphe.cpp
+  Source.cpp
+C:\Users\Valentin\Desktop\Projet_AlgoGraphe\algoGraphe_CLI\algoGraphe_CLI\Source.cpp(8,13): warning C4326: le type de retour de 'main' doit être 'int' au lieu de 'void'
+  Génération de code en cours...
+  algoGraphe_CLI.vcxproj -> C:\Users\Valentin\Desktop\Projet_AlgoGraphe\algoGraphe_CLI\x64\Debug\algoGraphe_CLI.exe
