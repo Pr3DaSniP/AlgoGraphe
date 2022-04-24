@@ -1,4 +1,5 @@
 #include "GrapheOrienteValue.h"
+#include <climits>
 
 GrapheOrienteValue::GrapheOrienteValue(vector<int> fs, vector<int> aps, vector<vector<int>> cout) 
 	: GrapheOriente(fs, aps), d_cost{ cout } 
@@ -46,6 +47,8 @@ void GrapheOrienteValue::ordonnancement() {
 
 void GrapheOrienteValue::dijkstra(int s) {
 	if (verifDijkstra()) {
+        d_dijkstra_d.clear();
+        d_dijkstra_pred.clear();
 		int n = d_aps[0];
 		vector<int> visited;
 		vector<int> notvisited;

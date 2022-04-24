@@ -24,7 +24,6 @@ private:
 
 	bool dijkstra_appartient(int k, vector<int> S);
 	int dijkstra_dmin(vector<int>& S, vector<int>& d);
-	bool verifDijkstra();
 public:
 	GrapheOrienteValue(vector<int> fs, vector<int> aps, vector<vector<int>> cout);
 	GrapheOrienteValue(vector<vector<int>> matrice, vector<vector<int>> cout);
@@ -37,6 +36,8 @@ public:
 	vector<vector<int>> get_COST();
 	vector<vector<int>> getDANTZIG_COST();
 	bool isPresenceCircuitAbsorbant();
+
+    bool verifDijkstra();
 
 	void ordonnancement();
 

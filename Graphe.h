@@ -27,7 +27,7 @@ public:
 	vector<int> getAPS();
 	vector<vector<int>> getMATRICEADJACENCE();
 
-	virtual void initialisation() = 0;	
+    virtual void initialisation() = 0;
 
 	virtual ~Graphe() = default;
 };

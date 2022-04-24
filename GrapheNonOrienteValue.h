@@ -2,6 +2,7 @@
 #define GRAPHENONORIENTEVALUE_H
 
 #include "GrapheNonOriente.h"
+#include "Arbre.h"
 class GrapheNonOrienteValue : public GrapheNonOriente {
 private:
 	// C(out)
@@ -13,22 +14,24 @@ private:
 	vector<int> d_kruskal_pilch;
 	vector<int> d_kruskal_cfc;
 	
-	// STRUCTURE POUR KRUSKAL
-	struct arete {
-		int s, t;
-		int cout;
-	};
-	
+    // STRUCTURE POUR KRUSKAL
+    struct arete {
+        int s, t;
+        int cout;
+    };
+
 	int findParent(int v, vector<int> parent);
 public:
 	GrapheNonOrienteValue(vector<int> fs, vector<int> aps, vector<vector<int>> cout);
 	GrapheNonOrienteValue(vector<vector<int>> matrice, vector<vector<int>> cout);
 
+    vector<vector<int>> get_COST();
+
 	vector<int> getKRUSKAL_PREM();
 	vector<int> getKRUSKAL_PILCH();
-	vector<int> getKRUSKAL_CFC();
+    vector<int> getKRUSKAL_CFC();
 
-	void kruskal();
+    Arbre* kruskal();
 
 	virtual ~GrapheNonOrienteValue() = default;
 };

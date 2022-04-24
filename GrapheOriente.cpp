@@ -63,6 +63,10 @@ vector<int> GrapheOriente::getAPSR() {
 	return d_apsr;
 }
 
+vector<int> GrapheOriente::getBR() {
+    return d_br;
+}
+
 void GrapheOriente::calculDDI() {
 	int n = d_aps[0];
 	d_ddi.resize(n + 1);

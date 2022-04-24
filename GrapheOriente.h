@@ -63,6 +63,7 @@ public:
 	vector<int> getTARJAN_PILCH();
 	vector<int> getFSR();
 	vector<int> getAPSR();
+    vector<int> getBR();
 
 	virtual ~GrapheOriente() = default;
 };

@@ -14,6 +14,11 @@ GrapheNonOrienteValue::GrapheNonOrienteValue(vector<int> fs, vector<int> aps, ve
 
 GrapheNonOrienteValue::GrapheNonOrienteValue(vector<vector<int>> matrice, vector<vector<int>> cout) : GrapheNonOriente(matrice), d_cost{ cout } {}
 
+vector<vector<int>> GrapheNonOrienteValue::get_COST()
+{
+    return d_cost;
+}
+
 vector<int> GrapheNonOrienteValue::getKRUSKAL_PREM()
 {
 	return d_kruskal_prem;
@@ -29,10 +34,13 @@ vector<int> GrapheNonOrienteValue::getKRUSKAL_CFC()
 	return d_kruskal_cfc;
 }
 
-void GrapheNonOrienteValue::kruskal() {
+Arbre* GrapheNonOrienteValue::kruskal() {
 	vector<arete> a;
 	int n = d_aps[0];
 	int m = d_fs[0] - n;
+
+    vector<vector<int>> matriceArbre(n+1, vector<int>(n+1));
+
 	int t;
 	for (int u = 1; u < n; ++u) {
 		for (int k = d_aps[u]; (t = d_fs[k]) != 0; ++k) {
@@ -59,7 +67,7 @@ void GrapheNonOrienteValue::kruskal() {
 		parent[i] = i;
 	}
 
-	vector<arete> Arbre(n - 1);
+    vector<arete> _Arbre(n - 1);
 	int count = 0;
 	int i = 0;
 	while (count < n - 1) {
@@ -72,11 +80,16 @@ void GrapheNonOrienteValue::kruskal() {
 
 			d_kruskal_cfc[dest] = currentArete.s;
 			d_kruskal_pilch[src] = currentArete.t;
+            matriceArbre[currentArete.s][currentArete.t] = 1;
+            matriceArbre[currentArete.t][currentArete.s] = 1;
 
-			Arbre[count] = currentArete;
+            _Arbre[count] = currentArete;
 			count++;
 			parent[src] = dest;
 		}
 		++i;
 	}
+    matriceArbre[0][0] = n;
+    matriceArbre[0][1] = count*2;
+    return new Arbre{matriceArbre};
 }
