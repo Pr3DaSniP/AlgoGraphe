@@ -1,5 +1,8 @@
 #include "GestionnaireGraphe.h"
 
+#include "json.hpp"
+#include <fstream>
+
 #include <iostream>
 
 using std::cout;
@@ -7,6 +10,10 @@ using std::endl;
 using std::cin;
 using std::string;
 using std::vector;
+using std::ifstream;
+using std::ofstream;
+
+using nlohmann::json;
 
 GestionnaireGraphe::GestionnaireGraphe() {
     d_grapheNonOriente = nullptr;
@@ -18,11 +25,38 @@ GestionnaireGraphe::GestionnaireGraphe() {
 }
 
 void GestionnaireGraphe::execute() {
-    auto load = charger();
-    if (load)
+
+    bool created = false, loaded = false;
+    int choix = -1;
+    do {
+        system("cls");
+        cout << " +-------------------------------+ \n";
+        cout << " | Projet Graphe Algorithme 2022 | \n";
+        cout << " +-------------------------------+ \n\n";
+        cout << "Que voulez vous faier : \n";
+
+        cout << "(1) Creer un graphe" << '\n';
+        cout << "(2) Charger un graphe" << '\n';
+        cout << "(3) Quitter" << '\n';
+
+        cin >> choix;
+    } while (choix < 0 || choix > 3);
+
+    switch (choix) {
+        case 1:
+            created = creerGraphe();
+			break;
+        case 2:
+			cout << "Nom du fichier (sans extension) : ";
+			string nomFichier;
+			cin >> nomFichier;
+            loaded = loadGraphe(nomFichier);
+            break;
+    }
+
+    if (created || loaded) {
         menu();
-    else
-        cout << "Chargement annule" << '\n';
+    }
 }
 
 void GestionnaireGraphe::menu() {
@@ -252,137 +286,353 @@ int GestionnaireGraphe::choixMenu() {
     return choix;
 }
 
-void GestionnaireGraphe::chargerGrapheNonOriente() {
-    d_isOriente = false, d_isArbre = false, d_isValue = false;
-    vector<vector<int>> matrice =
-    {
-        {4,12,0,0,0},
-        {0,0,1,1,1},
-        {0,1,0,1,1},
-        {0,1,1,0,1},
-        {0,1,1,1,0}
-    };
-
-    d_grapheNonOriente = new GrapheNonOriente{ matrice };
-}
-
-void GestionnaireGraphe::chargerGrapheOriente() {
-    d_isOriente = true, d_isArbre = false, d_isValue = false;
-
-    vector<vector<int>> mat =
-    {
-        {8,13,0,0,0,0,0,0,0},
-        {0,0,1,0,0,0,0,0,0},
-        {0,0,0,1,0,0,0,0,0},
-        {0,1,0,0,0,0,0,0,0},
-        {0,0,0,0,0,1,0,0,1},
-        {0,0,0,0,0,0,1,0,0},
-        {0,1,0,0,0,0,0,1,0},
-        {0,1,0,1,0,1,0,0,0},
-        {0,0,0,0,1,0,1,0,0}
-    };
-
-    d_grapheOriente = new GrapheOriente{ mat };
-}
-
-void GestionnaireGraphe::chargerGrapheNonOrienteValue() {
-    d_isOriente = false, d_isArbre = false, d_isValue = true;
-    vector<vector<int>> matrice =
-    {
-        {4,12,0,0,0},
-        {0,0,1,1,1},
-        {0,1,0,1,1},
-        {0,1,1,0,1},
-        {0,1,1,1,0}
-    };
-
-    vector<vector<int>> cost =
-    {
-        {4,12,0,0,0},
-        {0,0,1,1,2},
-        {0,1,0,1,2},
-        {0,1,1,0,2},
-        {0,2,2,2,0}
-    };
-
-    d_grapheNonOrienteValue = new GrapheNonOrienteValue{ matrice, cost };
-}
-
-void GestionnaireGraphe::chargerGrapheOrienteValue() {
-    d_isOriente = true, d_isArbre = false, d_isValue = true;
-    vector<vector<int>> matrice =
-    {
-        {5,7,0,0,0,0},
-        {0,0,0,1,0,1},
-        {0,1,0,1,0,0},
-        {0,0,0,0,0,0},
-        {0,0,1,0,0,0},
-        {0,0,1,0,1,0}
-    };
-
-    vector<vector<int>> c =
-    {
-        {5,7,0,0,0,0},
-        {0,0,INT_MAX,18,INT_MAX,3},
-        {0,8,0,4,INT_MAX,INT_MAX},
-        {0,INT_MAX,INT_MAX,0,INT_MAX,INT_MAX},
-        {0,INT_MAX,1,INT_MAX,0,INT_MAX},
-        {0,INT_MAX,10,INT_MAX,2,0}
-    };
-
-    d_grapheOrienteValue = new GrapheOrienteValue{ matrice, c };
-}
-
-void GestionnaireGraphe::chargerArbre() {
-    d_isOriente = false, d_isArbre = true, d_isValue = false;
-    vector<vector<int>> matriceA =
-    {
-        {8,15,0,0,0,0,0,0,0},
-        {0,0,0,1,0,0,0,0,0},
-        {0,0,0,1,0,0,0,0,0},
-        {0,1,1,0,1,1,1,0,0},
-        {0,0,0,1,0,0,0,1,1},
-        {0,0,0,1,0,0,0,0,0},
-        {0,0,0,1,0,0,0,0,0},
-        {0,0,0,0,1,0,0,0,0},
-        {0,0,0,0,1,0,0,0,0}
-    };
-
-    d_arbre = new Arbre{ matriceA };
-}
-
-int GestionnaireGraphe::chargerGraphe() {
-    int choix = -1;
-    do {
-        system("cls");
-        cout << " +-------------------------------+ \n";
-        cout << " | Projet Algorithme Graphe 2022 | \n";
-        cout << " +-------------------------------+ \n\n";
-        cout << "Que voulez-vous charger ? \n";
-        cout << "(1) Graphe non oriente" << '\n';
-        cout << "(2) Graphe oriente" << '\n';
-        cout << "(3) Graphe non oriente value " << '\n';
-        cout << "(4) Graphe oriente value" << '\n';
-        cout << "(5) Arbre" << '\n';
-        cout << "(6) Quitter" << '\n';
-        cin >> choix;
-    } while (choix < 0 || choix > 6);
-    return choix;
-}
-
-bool GestionnaireGraphe::charger() {
-    bool charged = false;
-    auto choix = chargerGraphe();
-    switch (choix)
-    {
-    case 1: chargerGrapheNonOriente(); charged = true; break;
-    case 2: chargerGrapheOriente(); charged = true; break;
-    case 3: chargerGrapheNonOrienteValue(); charged = true; break;
-    case 4: chargerGrapheOrienteValue(); charged = true; break;
-    case 5: chargerArbre(); charged = true; break;
-    case 6: charged = false; break;
+bool GestionnaireGraphe::loadGraphe(const string& nomFichier) {
+    ifstream fIN(nomFichier + ".json");
+    auto json = json::parse(fIN);
+    d_isArbre = json["isArbre"].get<bool>(), d_isOriente = json["isOriente"].get<bool>(), d_isValue = json["isValue"].get<bool>();
+	
+    if (d_isArbre) {
+        d_arbre = new Arbre{
+            json["fs"].get<vector<int>>(),
+            json["aps"].get<vector<int>>(),
+        };
+        return true;
     }
-    return charged;
+    else if (d_isValue) {
+        if (d_isOriente) {
+            d_grapheOrienteValue = new GrapheOrienteValue{
+                json["fs"].get<vector<int>>(),
+                json["aps"].get<vector<int>>(),
+                json["cost"].get<vector<vector<int>>>()
+            };
+            return true;
+        }
+        else {
+            d_grapheNonOrienteValue = new GrapheNonOrienteValue{
+				json["fs"].get<vector<int>>(),
+				json["aps"].get<vector<int>>(),
+				json["cost"].get<vector<vector<int>>>()
+			};
+            return true;
+        }
+    }
+    else {
+        if (d_isOriente) {
+            d_grapheOriente = new GrapheOriente{
+                json["fs"].get<vector<int>>(),
+                json["aps"].get<vector<int>>()
+            };
+            return true;
+        }
+        else {
+            d_grapheNonOriente = new GrapheNonOriente{
+				json["fs"].get<vector<int>>(),
+				json["aps"].get<vector<int>>()
+			};
+            return true;
+        }
+    }
+    return false;
+}
+
+void GestionnaireGraphe::saveGraphe(const string& nomFichier) {
+    json j;
+    j["isOriente"] = d_isOriente;
+    j["isValue"] = d_isValue;
+    j["isArbre"] = d_isArbre;
+    if (d_isArbre) {
+        j["fs"] = d_arbre->getFS();
+		j["aps"] = d_arbre->getAPS();
+    }
+    else if (d_isValue) {
+        if (d_isOriente) {
+            j["fs"] = d_grapheOrienteValue->getFS();
+            j["aps"] = d_grapheOrienteValue->getAPS();
+            j["cost"] = d_grapheOrienteValue->get_COST();
+        }
+        else {
+            j["fs"] = d_grapheNonOrienteValue->getFS();
+            j["aps"] = d_grapheNonOrienteValue->getAPS();
+            j["cost"] = d_grapheNonOrienteValue->get_COST();
+        }
+    }
+    else {
+        if (d_isOriente) {
+            j["fs"] = d_grapheOriente->getFS();
+            j["aps"] = d_grapheOriente->getAPS();
+        }
+        else {
+            j["fs"] = d_grapheNonOriente->getFS();
+            j["aps"] = d_grapheNonOriente->getAPS();
+        }
+    }
+    ofstream fichier(nomFichier + ".json");
+    fichier << j.dump(4);
+    fichier.close();  
+}
+
+bool GestionnaireGraphe::creerGraphe() {
+	system("cls");
+	cout << " +----------------------------+ \n";
+	cout << " | Creation d'un graphe       | \n";
+	cout << " +----------------------------+ \n\n";
+	cout << "Veuillez choisir le type de graphe : \n";
+	cout << "(1) Graphe oriente" << '\n';
+	cout << "(2) Graphe non oriente" << '\n';
+	cout << "(3) Graphe oriente avec valeur" << '\n';
+	cout << "(4) Graphe non oriente avec valeur" << '\n';
+	cout << "(5) Arbre" << '\n';
+	cout << "(6) Quitter" << '\n';
+	int choix = -1;
+	do {
+		cin >> choix;
+	} while (choix < 1 || choix > 6);
+	
+    bool isCreate = false;
+
+    if (choix != 6) {
+        switch (choix) {
+            case 1: {
+                d_isArbre = false, d_isOriente = true, d_isValue = false;
+
+                int nbSommets = 0;
+                do {
+                    cout << "Veuillez entrer le nombre de sommets : ";
+                    cin >> nbSommets;
+                } while (nbSommets < 1);
+
+                vector<vector<int>> mat(nbSommets + 1, vector<int>(nbSommets + 1));
+
+                int nbArcs = 1;
+                bool stop = false;
+                do {
+                    cout << "Ajouter un arc : \n";
+                    cout << "Entrez le numero du sommet de depart : ";
+                    int s1 = 0;
+                    cin >> s1;
+                    cout << "Entrez le numero du sommet d'arrivee : ";
+                    int s2 = 0;
+                    cin >> s2;
+                    mat[s1][s2] = 1;
+                    cout << "Voulez-vous ajouter un autre arc ? (1) oui (0) non : ";
+                    int choix = 0;
+                    cin >> choix;
+                    if (choix == 0) {
+                        stop = true;
+                    }
+                    nbArcs++;
+                } while (!stop);
+
+                mat[0][0] = nbSommets;
+                mat[0][1] = nbArcs;
+
+                d_grapheOriente = new GrapheOriente{ mat };
+                isCreate = true;
+            }
+            break;
+            case 2: {
+                d_isArbre = false, d_isOriente = false, d_isValue = false;
+
+                int nbSommets = 0;
+                do {
+                    cout << "Veuillez entrer le nombre de sommets : ";
+                    cin >> nbSommets;
+                } while (nbSommets < 1);
+
+                vector<vector<int>> mat(nbSommets + 1, vector<int>(nbSommets + 1));
+
+                int nbArcs = 2;
+                bool stop = false;
+                do {
+                    cout << "Ajouter un arc : \n";
+                    cout << "Entrez le numero du sommet de depart : ";
+                    int s1 = 0;
+                    cin >> s1;
+                    cout << "Entrez le numero du sommet d'arrivee : ";
+                    int s2 = 0;
+                    cin >> s2;
+                    mat[s1][s2] = 1;
+                    mat[s2][s1] = 1;
+                    cout << "Voulez-vous ajouter un autre arc ? (1) oui (0) non : ";
+                    int choix = 0;
+                    cin >> choix;
+                    if (choix == 0) {
+                        stop = true;
+                    }
+                    nbArcs += 2;
+                } while (!stop);
+
+                mat[0][0] = nbSommets;
+                mat[0][1] = nbArcs;
+
+                d_grapheNonOriente = new GrapheNonOriente{ mat };
+                isCreate = true;
+            }
+            break;
+            case 3: {
+                d_isArbre = false, d_isOriente = true, d_isValue = true;
+
+                int nbSommets = 0;
+                do {
+                    cout << "Veuillez entrer le nombre de sommets : ";
+                    cin >> nbSommets;
+                } while (nbSommets < 1);
+
+                vector<vector<int>> mat(nbSommets + 1, vector<int>(nbSommets + 1));
+                vector<vector<int>> cost(nbSommets + 1, vector<int>(nbSommets + 1));
+
+                int nbArcs = 1;
+                bool stop = false;
+                do {
+                    cout << "Ajouter un arc : \n";
+                    cout << "Entrez le numero du sommet de depart : ";
+                    int s1 = 0;
+                    cin >> s1;
+                    cout << "Entrez le numero du sommet d'arrivee : ";
+                    int s2 = 0;
+                    cin >> s2;
+                    mat[s1][s2] = 1;
+                    cout << "Entrez le cout de l'arc (999 pour INF) : ";
+					int costArc = 0;
+					cin >> costArc;
+                    if (costArc == 999) {
+                        cost[s1][s2] = INT_MAX;
+                    }
+                    else {
+                        cost[s1][s2] = costArc;
+                    }
+                    cout << "Voulez-vous ajouter un autre arc ? (1) oui (0) non : ";
+                    int choix = 0;
+                    cin >> choix;
+                    if (choix == 0) {
+                        stop = true;
+                    }
+                    nbArcs++;
+                } while (!stop);
+
+                mat[0][0] = nbSommets;
+                mat[0][1] = nbArcs;
+
+                d_grapheOrienteValue = new GrapheOrienteValue{ mat, cost };
+                isCreate = true;
+            }
+			break;
+            case 4: {
+                d_isArbre = false, d_isOriente = false, d_isValue = true;
+
+                int nbSommets = 0;
+                do {
+                    cout << "Veuillez entrer le nombre de sommets : ";
+                    cin >> nbSommets;
+                } while (nbSommets < 1);
+
+                vector<vector<int>> mat(nbSommets + 1, vector<int>(nbSommets + 1));
+                vector<vector<int>> cost(nbSommets + 1, vector<int>(nbSommets + 1));
+
+                int nbArcs = 2;
+                bool stop = false;
+                do {
+                    cout << "Ajouter un arc : \n";
+                    cout << "Entrez le numero du sommet de depart : ";
+                    int s1 = 0;
+                    cin >> s1;
+                    cout << "Entrez le numero du sommet d'arrivee : ";
+                    int s2 = 0;
+                    cin >> s2;
+                    mat[s1][s2] = 1;
+                    mat[s2][s1] = 1;
+                    cout << "Entrez le cout de l'arc (999 pour INF) : ";
+                    int costArc = 0;
+                    cin >> costArc;
+                    if (costArc == 999) {
+                        cost[s1][s2] = INT_MAX;
+                        cost[s2][s1] = INT_MAX;
+                    }
+                    else {
+                        cost[s1][s2] = costArc;
+                        cost[s2][s1] = costArc;
+                    }     
+                    cout << "Voulez-vous ajouter un autre arc ? (1) oui (0) non : ";
+                    int choix = 0;
+                    cin >> choix;
+                    if (choix == 0) {
+                        stop = true;
+                    }
+                    nbArcs += 2;
+                } while (!stop);
+
+                mat[0][0] = nbSommets;
+                mat[0][1] = nbArcs;
+
+                d_grapheNonOrienteValue = new GrapheNonOrienteValue{ mat, cost };
+                isCreate = true;
+            }
+            break;
+            case 5: {
+                d_isArbre = true, d_isOriente = false, d_isValue = false;
+
+                int nbSommets = 0;
+                do {
+                    cout << "Veuillez entrer le nombre de sommets : ";
+                    cin >> nbSommets;
+                } while (nbSommets < 1);
+
+                vector<vector<int>> mat(nbSommets + 1, vector<int>(nbSommets + 1));
+                vector<bool> relier(nbSommets, false);
+
+                int nbArcs = 2;
+                bool stop = false;
+                do {
+                    cout << "Ajouter un arc : \n";
+                    cout << "Entrez le numero du sommet de depart : ";
+                    int s1 = 0;
+                    cin >> s1;
+                    cout << "Entrez le numero du sommet d'arrivee : ";
+                    int s2 = 0;
+                    cin >> s2;
+                    mat[s1][s2] = 1;
+                    mat[s2][s1] = 1;
+                    relier[s1-1] = true;
+					relier[s2-1] = true;
+                    cout << "Voulez-vous ajouter un autre arc ? (1) oui (0) non : ";
+                    int choix = 0;
+                    cin >> choix;
+                    if (choix == 0) {
+                        stop = true;
+                    }
+                    nbArcs += 2;
+                } while (!stop);
+
+                mat[0][0] = nbSommets;
+                mat[0][1] = nbArcs;
+
+                bool isOk = true;
+                for (int i = 0; i < nbSommets; i++) {
+                    if (relier[i] == false) {
+                        isOk = false;
+                        break;
+                    }
+                }
+				
+                if (isOk) {
+                    d_arbre = new Arbre{ mat };
+                    isCreate = true;
+                }
+                else 
+					cout << "Le graphe n'est pas un arbre" << endl;
+            }
+            break;
+        }
+
+        if (isCreate) {
+            cout << "Nom du fichier de sauvegarde (sans extension): ";
+			string nomFichier;
+			cin >> nomFichier;
+            saveGraphe(nomFichier);
+            return true;
+        }
+    }
+    return false;
 }
 
 void GestionnaireGraphe::afficher(string s, vector<int> t) {

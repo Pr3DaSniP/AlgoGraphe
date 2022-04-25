@@ -29,15 +29,9 @@ private:
 
     int choixMenu();
 	
-    void chargerGrapheNonOriente();
-    void chargerGrapheOriente();
-    void chargerGrapheNonOrienteValue();
-    void chargerGrapheOrienteValue();
-    void chargerArbre();
-	
-    int chargerGraphe();
-
-    bool charger();
+    bool loadGraphe(const string& nomFichier);
+    void saveGraphe(const string& nomFichier);
+    bool creerGraphe();
 
     void afficher(string s, vector<int> t);
     void afficher(string s, vector<vector<int>> t);

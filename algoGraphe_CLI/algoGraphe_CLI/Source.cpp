@@ -1,9 +1,7 @@
 #include "GestionnaireGraphe.h"
 
-using namespace std;
-
 void main() {
-    GestionnaireGraphe G;
+	GestionnaireGraphe G;
 	
-    G.execute();
+	G.execute();
 }
