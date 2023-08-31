@@ -13,6 +13,44 @@ Pour installer le projet, il suffit de cloner le dépôt git et d'ouvrir avec Qt
 
 Une version en ligne de commande est également disponible dans le dossier `algoGraphe_CLI`.
 
+## Version en ligne de commande
+
+![Menu](assets/menu_cli.png)
+
+La création de graphe en ligne de commande est possible. Il suffit de suivre les instructions affichées à l'écran. Le graphe sera sauvegardé dans le fichier `json` à la racine du projet. 
+
+![Créer graphe](assets/creer_graphe_cli.png)
+
+Il sera de sous la forme :
+
+```json
+{
+    "aps": [4,1,5,9,13],
+    "cost": [
+        [0,0,0,0,0],
+        [0,0,1,1,2],
+        [0,1,0,1,2],
+        [0,1,1,0,2],
+        [0,2,2,2,0]
+    ],
+    "fs": [32,2,3,4,0,1,3,4,0,1,2,4,0,1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    "isArbre": false,
+    "isOriente": false,
+    "isValue": true
+}
+```
+
+Une fois chargé, il est possible d'effectuer les algorithmes suivants :
+
+![algo menu](assets/algo_menu.png)
+
+*Note : Le graphe au format JSON ci-dessus est fait pour être utiliser avec l'algorithme de Kruskal*
+
+Le résultat sera affiché à l'écran :
+
+![algo result](assets/kruskal_result_cli.png)
+
+
 ## Utilisation
 
 Les algorithmes implémentés sont les suivants :
