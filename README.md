@@ -53,6 +53,8 @@ Le résultat sera affiché à l'écran :
 
 ## Utilisation
 
+###### Vous pouvez lire le fichier [a_lire.txt](a_lire.txt) pour des exemples de graphes
+
 Les algorithmes implémentés sont les suivants :
  - Algorithme de Tarjan : recherche des composantes fortement connexes.
 
@@ -64,12 +66,12 @@ Les algorithmes implémentés sont les suivants :
 
  - Algorithme de Kruskal : recherche d'un arbre couvrant de poids minimal.
 
-![Kruskal](assets/kruskal.png)
+![Kruskal](assets/Kruskal.png)
 
  - Algorithme de Prüfer : recherche du codage de Prüfer d'un arbre.
 
-![Prüfer](assets/prufer.png)
-![Prüfer code](assets/prufer_code.png)
+![Prüfer](assets/Prufer.png)
+![Prüfer code](assets/Prufer_code.png)
 
  - Des données relatives au graphe sont également disponibles.
 
